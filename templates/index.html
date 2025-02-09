@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGUS - Class Management Portal</title>
+    <style>
+        /* Basic Reset */
+        body, h1, h2, h3, p, table, button {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #2c3e50; /* Dark blue */
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .navbar .sign-out {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .navbar .sign-out:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        .container {
+            padding: 20px;
+            text-align: center; /* Center-align everything */
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #2c3e50; /* Dark blue */
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #34495e; /* Slightly lighter blue */
+        }
+
+        h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #34495e; /* Slightly lighter blue */
+        }
+
+        /* Table */
+        table {
+            width: 80%;
+            margin: 0 auto 20px; /* Center the table */
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #2c3e50; /* Dark blue */
+            color: #fff;
+        }
+
+        /* Action Buttons */
+        .action-buttons button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .edit-btn {
+            background-color: #3498db; /* Blue */
+            color: #fff;
+        }
+
+        .edit-btn:hover {
+            background-color: #2980b9; /* Darker blue */
+        }
+
+        .delete-btn {
+            background-color: #e74c3c; /* Red */
+            color: #fff;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b; /* Darker red */
+        }
+
+        /* Add New Class Button */
+        .add-class-btn {
+            padding: 10px 20px;
+            background-color: #27ae60; /* Green */
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .add-class-btn:hover {
+            background-color: #219653; /* Darker green */
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .modal button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .save-btn {
+            background-color: #27ae60; /* Green */
+            color: #fff;
+        }
+
+        .save-btn:hover {
+            background-color: #219653; /* Darker green */
+        }
+
+        .cancel-btn {
+            background-color: #e74c3c; /* Red */
+            color: #fff;
+        }
+
+        .cancel-btn:hover {
+            background-color: #c0392b; /* Darker red */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">ARGUS</div>
+        <a href="#" class="sign-out">Sign Out</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>CLASS MANAGEMENT PORTAL</h1>
+        <h2>WELCOME, TEACHER!</h2>
+        <h3>Your Classes</h3>
+
+        <!-- Table for Classes -->
+        <table id="classes-table">
+            <thead>
+                <tr>
+                    <th>Class Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated dynamically -->
+            </tbody>
+        </table>
+
+        <!-- Add New Class Button -->
+        <button class="add-class-btn" onclick="openModal()">Add New Class</button>
+    </div>
+
+    <!-- Modal for Adding/Editing Classes -->
+    <div id="class-modal" class="modal">
+        <input type="text" id="class-name" placeholder="Enter class name">
+        <button class="save-btn" onclick="saveClass()">Save</button>
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    </div>
+
+    <script>
+        let isEditing = false;
+        let editId = null;
+
+        // Fetch and display classes on page load
+        window.onload = async () => {
+            const response = await fetch('/api/classes');
+            const classes = await response.json();
+            const tableBody = document.querySelector('#classes-table tbody');
+            tableBody.innerHTML = classes.map(cls => `
+                <tr>
+                    <td>${cls.name}</td>
+                    <td class="action-buttons">
+                        <button class="edit-btn" onclick="editClass(${cls.id}, '${cls.name}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteClass(${cls.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        // Open modal for adding/editing
+        function openModal() {
+            document.getElementById('class-modal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('class-modal').style.display = 'none';
+            document.getElementById('class-name').value = '';
+            isEditing = false;
+            editId = null;
+        }
+
+        // Save or update a class
+        async function saveClass() {
+            const className = document.getElementById('class-name').value.trim();
+            if (!className) {
+                alert('Please enter a class name.');
+                return;
+            }
+
+            const url = isEditing ? `/api/classes/${editId}` : '/api/classes';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: className })
+            });
+
+            if (response.ok) {
+                window.location.reload(); // Refresh the page to reflect changes
+            }
+        }
+
+        // Edit a class
+        function editClass(id, name) {
+            document.getElementById('class-name').value = name;
+            isEditing = true;
+            editId = id;
+            openModal();
+        }
+
+        // Delete a class
+        async function deleteClass(id) {
+            const response = await fetch(`/api/classes/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                window.location.reload(); // Refresh the page to reflect changes
+            }
+        }
+    </script>
+</body>
+</html>
